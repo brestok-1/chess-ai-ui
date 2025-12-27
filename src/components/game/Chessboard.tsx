@@ -5,7 +5,6 @@ import { Error } from '../../util/Error';
 import { ChessPiece } from './ChessPiece';
 import { Color, PieceSymbol, Square } from 'chess.js';
 import { pieceToFilename, pieceToName, pieceToString } from '@/game/piece';
-import { LobbyContext } from '@/providers/LobbyProvider';
 import { CompleteFlag } from '@/game/state';
 
 interface MoveProps {
@@ -146,7 +145,6 @@ export const Chessboard: React.FC = () => {
   const boardRef = useRef<HTMLDivElement>(null);
   const [moveError, setMoveError] = useState('');
   const [promotion, setPromotion] = useState<{ from: Square, to: Square } | undefined>(undefined);
-  const lobby = useContext(LobbyContext);
 
   const onTouchMove = (e: TouchEvent) => {
     if (!e.target || !boardRef.current) return;

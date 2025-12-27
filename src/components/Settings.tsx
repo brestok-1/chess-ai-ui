@@ -42,12 +42,40 @@ const SettingsText = styled.p`
 `;
 
 const SettingsTextCheckbox = styled.input`
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: ${props => props.theme.colors.primary};
 `;
 
 const SettingsTextInput = styled.input`
+  padding: 8px 12px;
+  border: 2px solid ${props => props.theme.colors.grid};
+  border-radius: 6px;
+  font-size: 1em;
+  background: ${props => props.theme.colors.background};
+  color: ${props => props.theme.colors.text};
+  min-width: 60px;
+
+  &:focus {
+    outline: none;
+    border-color: ${props => props.theme.colors.primary};
+  }
 `;
 
 const SettingsNumberInput = styled.input`
+  padding: 8px 12px;
+  border: 2px solid ${props => props.theme.colors.grid};
+  border-radius: 6px;
+  font-size: 1em;
+  background: ${props => props.theme.colors.background};
+  color: ${props => props.theme.colors.text};
+  min-width: 60px;
+
+  &:focus {
+    outline: none;
+    border-color: ${props => props.theme.colors.primary};
+  }
 `;
 
 const SettingsError = styled.p`

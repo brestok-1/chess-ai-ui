@@ -26,12 +26,8 @@ const FooterLink = styled.a`
 export const Footer: React.FC = () => {
   return (
     <FooterContainer>
-      <FooterText>
-        2023 zac
-      </FooterText>
       <FooterSpacer />
       <FooterText>
-        <FooterLink href='https://github.com/zaccnz/react-chess/'>source code</FooterLink>
       </FooterText>
     </FooterContainer>
   );

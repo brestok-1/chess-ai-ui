@@ -18,8 +18,8 @@ const HomeParagraph = styled.p`
 const HomeButtonContainer = styled.div`
   display: flex;
   flex-direction: row;
-  justify-content: space-around;
-  max-width: 200px;
+  justify-content: center;
+  gap: 20px;
   margin: 0 auto;
   align-items: center;
 `;
@@ -43,33 +43,15 @@ const HomeInput = styled.input`
 `;
 
 export const Home: React.FC = () => {
-  const idRef = useRef<HTMLInputElement>(null);
-  const [id, setId] = useState('');
-
   return (
     <HomeContainer>
       <HomeHeader>create a game</HomeHeader>
       <HomeButtonContainer>
-        <HomeButton to="/game">local</HomeButton>
-        <HomeButton to="/game/bot">bot</HomeButton>
-        <HomeButton to="/lobby">online</HomeButton>
-      </HomeButtonContainer>
-      <HomeHeader>join game</HomeHeader>
-      <HomeButtonContainer>
-        <HomeInput
-          placeholder='lobby id'
-          maxLength={6}
-          value={id}
-          ref={idRef}
-          type="text"
-          onChange={() => {
-            setId(idRef.current?.value ?? '');
-          }}
-        />
-        <HomeButton to={`/lobby/${id}`}>join</HomeButton>
+        <HomeButton to="/game">Local</HomeButton>
+        <HomeButton to="/game/bot">Bot</HomeButton>
       </HomeButtonContainer>
       <HomeParagraph>
-        play chess against a local player, a bot, or an online player.
+        play chess against a local player or a bot.
       </HomeParagraph>
     </HomeContainer >
   );

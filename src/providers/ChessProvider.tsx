@@ -4,10 +4,9 @@ import { SettingsContext } from './SettingsProvider';
 import BotWorker from '@/game/bot?worker';
 import { BotMessage, BotResult } from '@/game/bot';
 import { Chess, Color, Move, PieceSymbol, Square } from 'chess.js';
-import { ChessState, chessReducer, createChessState, syncGame } from '@/game/state';
-import { LobbyContext, useLobbyContext } from './LobbyProvider';
+import { ChessState, chessReducer, createChessState } from '@/game/state';
 
-export type PlayerType = 'local' | 'bot' | 'online';
+export type PlayerType = 'local' | 'bot';
 
 export interface ChessConfig {
   player_white: PlayerType;
@@ -67,7 +66,6 @@ export const ChessProvider: React.FC<ChessProviderProps> = (props) => {
   const stateRef = useRef(new Chess());
   const workerRef = useRef(new BotWorker());
   const configRef = useRef<ChessConfig | undefined>(undefined);
-  const lobby = useContext(LobbyContext);
 
   workerRef.current.onmessage = (e) => {
     const result = e.data as BotResult;
@@ -98,32 +96,8 @@ export const ChessProvider: React.FC<ChessProviderProps> = (props) => {
         fen: stateRef.current.fen(),
         team: state.turn,
       } as BotMessage);
-    } else if (lobby?.type === 'ingame') {
-      const lastPlayer = lobby.lobby.players[state.turn === 'w' ? 'b' : 'w'];
-      const stateMoves = state.moves?.length ?? 0;
-      const lobbyMoves = lobby.lobby.game.moves?.length ?? 0;
-      if (lastPlayer && lastPlayer.uid === lobby.uid && stateMoves > lobbyMoves) {
-        lobby.Sync(state);
-      }
     }
   }, [state.turn]);
-
-  useEffect(() => {
-    if (lobby?.type === 'ingame') {
-      const lobbyData = lobby.lobby;
-      setState(state => {
-        const next = syncGame(state, lobbyData, lobby.uid, stateRef.current, new Date().getTime());
-        if (typeof next === 'string') {
-          setAnticheat(next);
-          console.error('found cheater!')
-          console.error(next);
-        } else {
-          return next;
-        }
-        return state;
-      })
-    }
-  }, [lobby]);
 
   const contextValue: ChessInterface = {
     state,
@@ -170,9 +144,6 @@ export const ChessProvider: React.FC<ChessProviderProps> = (props) => {
       return stateRef.current.moves({ square: XYtoSquare(from_x, from_y), verbose: true });
     },
     UndoMove: (): boolean => {
-      if (state.players.w.type === 'online' || state.players.b.type === 'online') {
-        return false;
-      }
       setState(oldState => chessReducer(oldState, {
         type: 'undo',
         time: new Date().getTime(),
@@ -181,9 +152,6 @@ export const ChessProvider: React.FC<ChessProviderProps> = (props) => {
       return true;
     },
     RedoMove: (): boolean => {
-      if (state.players.w.type === 'online' || state.players.b.type === 'online') {
-        return false;
-      }
       setState(oldState => chessReducer(oldState, {
         type: 'redo',
         time: new Date().getTime(),
@@ -192,9 +160,6 @@ export const ChessProvider: React.FC<ChessProviderProps> = (props) => {
       return true;
     },
     Pause: (): boolean => {
-      if (state.players.w.type === 'online' || state.players.b.type === 'online') {
-        return false;
-      }
       if (!allowPause) return false;
 
       setState(oldState => chessReducer(oldState, {
