@@ -24,4 +24,3 @@ export async function getAIMove(fen: string): Promise<AIMoveResponse> {
   return response.json();
 }
 
-

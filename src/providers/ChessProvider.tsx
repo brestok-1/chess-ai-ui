@@ -1,10 +1,9 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { SettingsContext } from './SettingsProvider';
 
-import BotWorker from '@/game/bot?worker';
-import { BotMessage, BotResult } from '@/game/bot';
-import { Chess, Color, Move, PieceSymbol, Square } from 'chess.js';
+import { Chess, Color, PieceSymbol, Square } from 'chess.js';
 import { ChessState, chessReducer, createChessState } from '@/game/state';
+import { getAIMove } from '@/api/chessApi';
 
 export type PlayerType = 'local' | 'bot';
 
@@ -60,44 +59,51 @@ interface ChessProviderProps {
 }
 
 export const ChessProvider: React.FC<ChessProviderProps> = (props) => {
-  const { allowPause, defaultUsername, gameLength } = useContext(SettingsContext);
+  const { allowPause, gameLength } = useContext(SettingsContext);
   const [state, setState] = useState(createChessState(gameLength, { w: { name: 'loading', type: 'local' }, b: { name: 'loading', type: 'local' } }));
   const [anticheat, setAnticheat] = useState<string | undefined>();
+  const [isAIThinking, setIsAIThinking] = useState(false);
   const stateRef = useRef(new Chess());
-  const workerRef = useRef(new BotWorker());
   const configRef = useRef<ChessConfig | undefined>(undefined);
-
-  workerRef.current.onmessage = (e) => {
-    const result = e.data as BotResult;
-    switch (result.type) {
-      case 'success': {
-        setState(oldState => chessReducer(oldState, {
-          type: 'move',
-          from: result.move.from,
-          to: result.move.to,
-          promotion: result.move.promotion,
-          time: new Date().getTime(),
-          chess: stateRef.current,
-        }));
-        break;
-      }
-      case 'failed': {
-        alert('bot failed to generate a move');
-        break;
-      }
-    }
-  }
 
   useEffect(() => {
     const thisPlayer = (state.turn === 'b' ? configRef.current?.player_black : configRef.current?.player_white);
-    if (thisPlayer === 'bot' && state.redoStack.length === 0) {
-      workerRef.current.postMessage({
-        type: 'generateMove',
-        fen: stateRef.current.fen(),
-        team: state.turn,
-      } as BotMessage);
+    if (thisPlayer === 'bot' && state.redoStack.length === 0 && !isAIThinking && !state.complete) {
+      setIsAIThinking(true);
+      const fen = stateRef.current.fen();
+      
+      getAIMove(fen)
+        .then((response) => {
+          if (response.error) {
+            console.error('AI error:', response.error);
+            alert('Bot failed to generate a move: ' + response.error);
+            return;
+          }
+          
+          if (response.from_square && response.to_square) {
+            const from = response.from_square as Square;
+            const to = response.to_square as Square;
+            const promotion = response.promotion as PieceSymbol | undefined;
+            
+            setState(oldState => chessReducer(oldState, {
+              type: 'move',
+              from,
+              to,
+              promotion,
+              time: new Date().getTime(),
+              chess: stateRef.current,
+            }));
+          }
+        })
+        .catch((error) => {
+          console.error('API call failed:', error);
+          alert('Failed to connect to AI backend');
+        })
+        .finally(() => {
+          setIsAIThinking(false);
+        });
     }
-  }, [state.turn]);
+  }, [state.turn, state.complete, isAIThinking]);
 
   const contextValue: ChessInterface = {
     state,
